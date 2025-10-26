@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { getUsuarios, deleteUsuario, restoreUsuario } from "../api/usuarios";
 import { usuarioSchema } from "@/src/app/schemas/usuarioSchemas";
 import { z } from "zod";
 import { Table } from "../../components/Table";
-import { Edit, Trash2, RefreshCw } from "lucide-react";
+import { Edit, Trash2, RefreshCw, Plus } from "lucide-react";
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<z.infer<typeof usuarioSchema>[]>([]);
@@ -15,9 +16,11 @@ export default function UsuariosPage() {
     setLoading(true);
     try {
       const data = await getUsuarios();
-      console.log('📊 Usuarios recibidos:', data);
-      console.log('🔴 Usuarios INACTIVOS:', data.filter(u => !u.activo));
-      setUsuarios(data);
+      console.log("📊 Usuarios recibidos:", data);
+      console.log("🔴 Usuarios INACTIVOS:", data.filter((u) => !u.activo));
+      // Validar datos con el esquema
+      const validatedData = data.map((item) => usuarioSchema.parse(item));
+      setUsuarios(validatedData);
     } catch (err) {
       console.error(err);
       alert("Error cargando usuarios");
@@ -31,45 +34,31 @@ export default function UsuariosPage() {
   }, []);
 
   const handleEdit = (usuario: z.infer<typeof usuarioSchema>) => {
-    // Opción 1: Redirigir a página de edición (Next.js)
     window.location.href = `/usuarios/editar/${usuario.id}`;
-    
-    // Opción 2: Si usas Next.js App Router con useRouter:
-    // const router = useRouter();
-    // router.push(`/usuarios/editar/${usuario.id}`);
-    
-    // Opción 3: Si usas un modal (temporal alert para probar)
-    // alert(`Editar usuario: ${usuario.primerNombre} ${usuario.primerApellido}`);
   };
 
   const handleDelete = async (usuario: z.infer<typeof usuarioSchema>) => {
     if (!confirm(`¿Seguro que quieres eliminar a ${usuario.primerNombre}?`)) return;
-    
+
     try {
-      console.log('🗑️ Eliminando usuario...', usuario.id);
       await deleteUsuario(usuario.id);
-      console.log('✅ Usuario eliminado, recargando...');
       await fetchUsuarios();
-      console.log('✅ Datos recargados');
       alert(`Usuario ${usuario.primerNombre} eliminado correctamente`);
     } catch (error) {
-      console.error('❌ Error al eliminar:', error);
+      console.error(error);
       alert("Error al eliminar el usuario");
     }
   };
 
   const handleRestore = async (usuario: z.infer<typeof usuarioSchema>) => {
-    if (!confirm(`¿Restaurar a ${usuario.primerNombre}?`)) return;
-    
+    if (!confirm(`Restaurar a ${usuario.primerNombre}?`)) return;
+
     try {
-      console.log('♻️ Restaurando usuario...', usuario.id);
       await restoreUsuario(usuario.id);
-      console.log('✅ Usuario restaurado, recargando...');
       await fetchUsuarios();
-      console.log('✅ Datos recargados');
       alert(`Usuario ${usuario.primerNombre} restaurado correctamente`);
     } catch (error) {
-      console.error('❌ Error al restaurar:', error);
+      console.error(error);
       alert("Error al restaurar el usuario");
     }
   };
@@ -78,30 +67,48 @@ export default function UsuariosPage() {
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Gestión de Usuarios
-          </h1>
-          <p className="text-gray-600">Administra los usuarios del sistema</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Gestión de Usuarios</h1>
+            <p className="text-gray-600">Administra los usuarios del sistema</p>
+          </div>
+          <div className="flex gap-4">
+            <Link
+              href="/usuarios/crear"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Crear usuario
+            </Link>
+            <button
+              onClick={fetchUsuarios}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium transition-colors"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Refrescar
+            </button>
+          </div>
         </div>
 
         {/* Tabla */}
         <Table
           data={usuarios}
           columns={[
-            { header: "ID", accessor: "id", sortable: true },
+            { header: "ID", accessor: "id", sortable: true, width: 100 },
             {
               header: "Nombre Completo",
               accessor: (u) =>
-                `${u.primerNombre} ${u.segundoNombre || ""} ${u.primerApellido} ${
-                  u.segundoApellido || ""
-                }`.replace(/\s+/g, " "),
+                `${u.primerNombre} ${u.segundoNombre || ""} ${u.primerApellido} ${u.segundoApellido || ""}`
+                  .replace(/\s+/g, " ")
+                  .trim(),
               sortable: true,
               sortKey: "primerNombre",
+              width: 250,
             },
-            { header: "Cédula", accessor: "cedula", sortable: true },
-            { header: "Email", accessor: "email", sortable: true },
-            { header: "Rol", accessor: "rol", sortable: true },
+            { header: "Cédula", accessor: "cedula", sortable: true, width: 150 },
+            { header: "Email", accessor: "email", sortable: true, width: 250 },
+            { header: "Rol", accessor: "rol", sortable: true, width: 150 },
             {
               header: "Estado",
               accessor: (u) => (
@@ -115,6 +122,7 @@ export default function UsuariosPage() {
               ),
               sortable: true,
               sortKey: "activo",
+              width: 120,
             },
           ]}
           actions={[
@@ -140,7 +148,7 @@ export default function UsuariosPage() {
             },
           ]}
           searchPlaceholder="Buscar por nombre, email o cédula..."
-          pageSize={10}
+          pageSize={50}
           loading={loading}
           emptyMessage="No hay usuarios registrados"
           emptyDescription="Agrega usuarios para comenzar a gestionar el sistema"
