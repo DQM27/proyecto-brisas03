@@ -12,8 +12,8 @@ export interface Vehiculo {
 }
 
 export interface FormularioIngreso {
-  contratista_id: number;
+  contratista_id: number | null;
   vehiculo: string;
-  autorizacion: "PRAIND" | "Temporal" | "Visitante";
+  autorizacion: string;
   gafete: string;
 }

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { RolUsuario } from "../enums/rol-usuario.enum"; // Ajusta la ruta a tu enum
+import { RolUsuario } from "../../common/enums/rol-usuario.enum"; // Ajusta la ruta a tu enum
 
 export const createUsuarioSchema = z.object({
   primerNombre: z.string().min(1, "El primer nombre es obligatorio"),

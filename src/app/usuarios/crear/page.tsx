@@ -7,7 +7,7 @@ import api from "@/src/lib/axios"; // <-- tu instancia configurada
 import axios from "axios";          // <-- axios real para isAxiosError
 import { createUsuarioSchema } from "../../schemas/createUsuario";
 import { z } from "zod";
-import { RolUsuario } from "../../enums/rol-usuario.enum";
+import { RolUsuario } from "../../../common/enums/rol-usuario.enum";
 
 // Tipado del formulario usando Zod
 type CreateUsuarioForm = z.infer<typeof createUsuarioSchema>;
