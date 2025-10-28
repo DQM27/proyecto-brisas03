@@ -1,46 +1,78 @@
+// src/app/schemas/ingresos.schema.ts
 import { z } from "zod";
-import { responseContratistaSchema } from "./contratistas.schema";
-import { responseVehiculoSchema } from "./vehiculos.schema";
-import { responseGafeteSchema } from "./gafetes.schema";
 
-// Enum tipoAutorizacion
-export const tipoAutorizacionSchema = z.enum(['MANUAL', 'AUTOMATICA', 'TEMPORAL']);
-
-// Crear ingreso
-export const createIngresoSchema = z.object({
-  contratistaId: z.number().int(),
-  vehiculoId: z.number().int().optional(),
-  gafeteId: z.number().int(),
-  puntoEntradaId: z.number().int().optional(),
-  tipoAutorizacion: tipoAutorizacionSchema.optional(),
-  observaciones: z.string().max(500).optional(),
+// ----------------------
+// Sub-objetos
+// ----------------------
+export const contratistaSchema = z.object({
+  id: z.number(),
+  nombre: z.string(),
+  identificacion: z.string(),
 });
 
-// Actualizar ingreso
-export const updateIngresoSchema = createIngresoSchema.partial();
+export const vehiculoSchema = z.object({
+  id: z.number(),
+  placa: z.string(),
+}).nullable();
 
-// Respuesta de ingreso
+export const gafeteSchema = z.object({
+  id: z.number(),
+  codigo: z.string(),
+  estado: z.string(),
+}).nullable();
+
+export const puntoAccesoSchema = z.object({
+  id: z.number(),
+  nombre: z.string(),
+}).nullable();
+
+export const usuarioSchema = z.object({
+  id: z.number(),
+  nombreCompleto: z.string(),
+}).nullable();
+
+// ----------------------
+// Ingreso principal
+// ----------------------
 export const responseIngresoSchema = z.object({
   id: z.number(),
-  contratistaId: z.number().optional(),
-  vehiculoId: z.number().nullable().optional(),
-  gafeteId: z.number().nullable().optional(),
-  fechaIngreso: z.string().transform(str => new Date(str)),
-  fechaSalida: z.string().nullable().transform(str => str ? new Date(str) : null),
-  usuarioRegistroId: z.number().optional(),
-  activo: z.boolean().optional(),
-  observaciones: z.string().nullable(),
-  fechaCreacion: z.string().transform(str => new Date(str)),
-  fechaActualizacion: z.string().transform(str => new Date(str)),
-  fechaEliminacion: z.string().nullable().transform(str => str ? new Date(str) : null),
-
-  // Relaciones
-  contratista: responseContratistaSchema.optional(),
-  vehiculo: responseVehiculoSchema.nullable().optional(),
-  gafete: responseGafeteSchema.nullable().optional(),
+  contratista: contratistaSchema,
+  vehiculo: vehiculoSchema.optional(),
+  gafete: gafeteSchema.optional(),
+  puntoEntrada: puntoAccesoSchema.optional(),
+  puntoSalida: puntoAccesoSchema.optional(),
+  tipoAutorizacion: z.enum(["AUTOMATICA", "MANUAL"]),
+  fechaIngreso: z.string(),
+  fechaSalida: z.string().nullable().optional(),
+  ingresadoPor: usuarioSchema,
+  sacadoPor: usuarioSchema.optional(),
+  dentroFuera: z.boolean(),
+  observaciones: z.string().nullable().optional(),
+  fechaCreacion: z.string(),
+  fechaActualizacion: z.string(),
+  fechaEliminacion: z.string().nullable().optional(),
+  duracion: z.string().optional(),
 });
 
-// Tipos inferidos
-export type Ingreso = z.infer<typeof responseIngresoSchema>;
-export type CreateIngresoDto = z.infer<typeof createIngresoSchema>;
-export type UpdateIngresoDto = z.infer<typeof updateIngresoSchema>;
+// ----------------------
+// Schemas para crear / actualizar
+// ----------------------
+export const createIngresoSchema = z.object({
+  contratistaId: z.number(),
+  gafeteId: z.number().optional(),
+  vehiculoId: z.number().optional(),
+  observaciones: z.string().optional(),
+  tipoAutorizacion: z.enum(["AUTOMATICA", "MANUAL"]).optional(),
+});
+
+export const updateIngresoSchema = z.object({
+  observaciones: z.string().optional(),
+  tipoAutorizacion: z.enum(["AUTOMATICA", "MANUAL"]).optional(),
+});
+
+// ----------------------
+// TIPOS TYPESCRIPT
+// ----------------------
+export type ResponseIngreso = z.infer<typeof responseIngresoSchema>;
+export type CreateIngreso = z.infer<typeof createIngresoSchema>;
+export type UpdateIngreso = z.infer<typeof updateIngresoSchema>;

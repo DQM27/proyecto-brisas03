@@ -1,26 +1,26 @@
-// frontend-next/src/hooks/useIngresos.ts
-import { useState } from "react";
-import { createIngresoSchema } from "@/src/app/schemas/ingresos.schema";
-import { z } from "zod";
-import api from "@/src/lib/axios";
+"use client";
+import { useEffect, useState } from "react";
+import { listarIngresos } from "@/src/app/api/ingresosApi";
 
-export const useRegistrarIngreso = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const useIngresos = () => {
+  const [ingresos, setIngresos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const registrarIngreso = async (payload: z.infer<typeof createIngresoSchema>) => {
-    setLoading(true);
+  const fetchIngresos = async () => {
     try {
-      const { data } = await api.post("/ingresos", payload);
-      return data;
+      const data = await listarIngresos();
+      console.log("✅ Datos recibidos del backend:", data);
+      setIngresos(data[0]); // <- primer valor del array [items, total]
     } catch (err) {
-      console.error(err);
-      setError("Error al registrar ingreso");
-      throw err;
+      console.error("❌ Error cargando ingresos:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  return { registrarIngreso, loading, error };
+  useEffect(() => {
+    fetchIngresos();
+  }, []);
+
+  return { ingresos, loading };
 };

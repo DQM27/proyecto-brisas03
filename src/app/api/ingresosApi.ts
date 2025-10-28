@@ -1,53 +1,56 @@
-import api from "@/src/lib/axios";
-import { z } from "zod";
-import { createIngresoSchema, updateIngresoSchema, responseIngresoSchema } from "@/src/app/schemas/ingresos.schema";
+import axios from 'axios';
+import { EstadoDevolucionGafete } from '@common/enums/estado-devolucion-gafete.enum';
 
-const getUserId = (): number => {
-  return 1; // fallback temporal
-};
+export interface CreateIngresoDto {
+  contratistaId: number;
+  gafeteId?: number;
+  vehiculoId?: number;
+  puntoEntradaId?: number;
+  tipoAutorizacion?: 'AUTOMATICA' | 'MANUAL';
+  observaciones?: string;
+}
 
-// Normaliza un ingreso para que Zod no rompa
-const normalizeIngreso = (ingreso: any) => ({
-  ...ingreso,
-  contratistaId: ingreso.contratistaId ?? undefined,
-  vehiculoId: ingreso.vehiculoId ?? null,
-  gafeteId: ingreso.gafeteId ?? null,
-  usuarioRegistroId: ingreso.usuarioRegistroId ?? undefined,
-  activo: ingreso.activo ?? undefined,
-  contratista: ingreso.contratista ?? undefined,
-  vehiculo: ingreso.vehiculo ?? null,
-  gafete: ingreso.gafete ?? null,
+export interface UpdateIngresoDto {
+  observaciones?: string;
+  tipoAutorizacion?: 'AUTOMATICA' | 'MANUAL';
+}
+
+const api = axios.create({
+  baseURL: 'http://localhost:3000', // Cambiar al host de tu API
 });
 
-// Crear ingreso
-export const createIngreso = async (payload: z.infer<typeof createIngresoSchema>) => {
-  const usuarioId = getUserId();
-  const { data } = await api.post(`/ingresos?usuarioId=${usuarioId}`, payload);
-  return responseIngresoSchema.parse(normalizeIngreso(data));
+// Registrar ingreso
+export const registrarIngreso = async (dto: CreateIngresoDto, usuarioId: number) => {
+  const response = await api.post('/ingresos', dto, { params: { usuarioId } });
+  return response.data;
 };
 
-// Actualizar ingreso
-export const updateIngreso = async (id: number, payload: z.infer<typeof updateIngresoSchema>) => {
-  const { data } = await api.patch(`/ingresos/${id}`, payload);
-  return responseIngresoSchema.parse(normalizeIngreso(data));
+// Registrar salida
+export const registrarSalida = async (
+  contratistaId: number,
+  usuarioId: number,
+  gafeteEstado?: EstadoDevolucionGafete
+) => {
+  const params: any = { usuarioId };
+  if (gafeteEstado) params.gafeteEstado = gafeteEstado;
+  const response = await api.patch(`/ingresos/${contratistaId}/salida`, {}, { params });
+  return response.data;
 };
 
-// Obtener todos los ingresos
-export const getIngresos = async () => {
-  const { data } = await api.get("/ingresos");
-  const normalizados = (data as any[]).map(normalizeIngreso);
-  return z.array(responseIngresoSchema).parse(normalizados);
+// Listar ingresos
+export const listarIngresos = async (page = 1, limit = 50) => {
+  const response = await api.get('/ingresos', { params: { page, limit } });
+  return response.data;
 };
 
 // Obtener ingreso por ID
-export const getIngreso = async (id: number) => {
-  const { data } = await api.get(`/ingresos/${id}`);
-  return responseIngresoSchema.parse(normalizeIngreso(data));
+export const obtenerIngreso = async (id: number) => {
+  const response = await api.get(`/ingresos/${id}`);
+  return response.data;
 };
 
-// Registrar salida de un contratista
-export const registrarSalida = async (contratistaId: number) => {
-  const usuarioId = getUserId();
-  const { data } = await api.patch(`/ingresos/${contratistaId}/salida?usuarioId=${usuarioId}`);
-  return responseIngresoSchema.parse(normalizeIngreso(data));
+// Actualizar ingreso
+export const actualizarIngreso = async (id: number, dto: UpdateIngresoDto) => {
+  const response = await api.patch(`/ingresos/${id}`, dto);
+  return response.data;
 };
