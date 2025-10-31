@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/src/hooks/useToast";
 import { Loader2, Lock } from "lucide-react";
 import { changePassword } from "../api/auth";
-import { changePasswordSchema } from "../schemas/changePassword";
+import { changePasswordSchema } from "../../schemas/changePassword";
 
 type FormData = z.infer<typeof changePasswordSchema>;
 

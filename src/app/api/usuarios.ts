@@ -1,7 +1,7 @@
 // src/lib/api.ts
 import api from "@/src/lib/axios";
 import { z } from "zod";
-import { createUsuarioSchema } from "../schemas/usuarioSchemas";
+import { createUsuarioSchema } from "../../schemas/usuarioSchemas";
 
 // === REGISTRO ===
 export const register = async (dto: z.infer<typeof createUsuarioSchema>) => {

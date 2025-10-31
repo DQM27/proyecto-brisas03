@@ -20,7 +20,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/src/hooks/useToast";
 import { Loader2 } from "lucide-react";
 import { register } from "@/src/app/api/usuarios";
-import { createUsuarioSchema } from "@/src/app/schemas/usuarioSchemas";
+import { createUsuarioSchema } from "@/src/schemas/usuarioSchemas";
+import { z } from "zod";
 
 type FormData = z.infer<typeof createUsuarioSchema>;
 

@@ -1,6 +1,0 @@
-export enum RolUsuario {
-  ADMIN = "ADMIN",
-  SUPERVISOR = "SUPERVISOR",
-  SEGURIDAD = "SEGURIDAD",
-  OPERADOR = "OPERADOR",
-}
