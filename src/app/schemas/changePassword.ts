@@ -1,9 +1,16 @@
-import * as z from "zod";
+// src/app/schemas/changePasswordSchema.ts
+import { z } from "zod";
 
 export const changePasswordSchema = z.object({
-  passwordActual: z.string().min(1, "Debe ingresar su contraseña actual"),
-  nuevaPassword: z.string()
-    .min(6, "La nueva contraseña debe tener al menos 6 caracteres")
-    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
-    .regex(/[0-9]/, "Debe contener al menos un número"),
+  passwordActual: z
+    .string()
+    .min(1, "Debe ingresar la contraseña actual"),
+
+  nuevaPassword: z
+    .string()
+    .min(6, "Mínimo 6 caracteres")
+    .max(100, "Máximo 100 caracteres")
+    .regex(/^(?=.*[A-Z])(?=.*\d).+$/, "Debe tener mayúscula y número"),
 });
+
+export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;

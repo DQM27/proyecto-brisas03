@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import { changePasswordSchema } from "../schemas/changePassword";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
@@ -26,6 +27,20 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 // Logout
 export const logout = async (): Promise<void> => {
   await api.post("/auth/logout");
+};
+
+
+
+export const changePassword = async (dto: z.infer<typeof changePasswordSchema>) => {
+  try {
+    await api.patch("/usuarios/change-password", dto);
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message ||
+      error.message ||
+      "No se pudo cambiar la contraseña"
+    );
+  }
 };
 
 export default api;

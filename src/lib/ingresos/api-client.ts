@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { ErrorResponse, ErrorResponseSchema } from '../schemas/ingresos.schema';
+import { ErrorResponse, ErrorResponseSchema } from './ingresos.schemas';
 
 /**
  * Cliente de Axios configurado para la API

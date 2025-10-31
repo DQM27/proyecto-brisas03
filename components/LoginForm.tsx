@@ -1,4 +1,3 @@
-// app/login/page.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -25,58 +24,69 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/src/hooks/useToast";
+import { useToast } from "@/src/hooks/useToast"; // TU HOOK
 import { Loader2 } from "lucide-react";
-import { login } from "@/src/app/api/auth";
 
-// Validación
+// Esquema de validación
 const formSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Ingresa un email válido"),
   password: z.string().min(6, "Mínimo 6 caracteres"),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function LoginPage() {
+export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const { success, error } = useToast();
+  const { success, error } = useToast(); // TU TOAST: success, error, warning, info
   const router = useRouter();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
 
     try {
-      const { accessToken } = await login(data.email, data.password);
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
 
-      // Guardar token
-      localStorage.setItem("accessToken", accessToken);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Credenciales incorrectas");
+      }
 
-      success("¡Sesión iniciada!", 3000);
-      setTimeout(() => router.push("/dashboard"), 500);
+      // TU TOAST: éxito
+      success("¡Bienvenido!", 3000);
+
+      router.push("/dashboard");
     } catch (err: any) {
-      error(err || "No se pudo iniciar sesión");
+      // TU TOAST: error
+      error(err.message || "No se pudo iniciar sesión");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold">Iniciar Sesión</CardTitle>
-          <CardDescription className="text-base">
-            Conéctate a tu cuenta
+          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+          <CardDescription>
+            Ingresa tu email y contraseña para acceder
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -84,7 +94,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="tunombre@ejemplo.com" type="email" {...field} />
+                      <Input placeholder="tunombre@ejemplo.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -98,8 +108,11 @@ export default function LoginPage() {
                   <FormItem>
                     <div className="flex items-center justify-between">
                       <FormLabel>Contraseña</FormLabel>
-                      <a href="#" className="text-sm font-medium text-primary hover:underline">
-                        ¿Olvidaste?
+                      <a
+                        href="#"
+                        className="text-sm text-muted-foreground hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
                       </a>
                     </div>
                     <FormControl>
@@ -110,24 +123,24 @@ export default function LoginPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full text-lg py-6" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Iniciando...
                   </>
                 ) : (
-                  "Entrar"
+                  "Iniciar Sesión"
                 )}
               </Button>
             </form>
           </Form>
 
-          <Separator />
+          <Separator className="my-6" />
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm">
             ¿No tienes cuenta?{" "}
-            <a href="#" className="font-semibold text-primary hover:underline">
+            <a href="#" className="underline text-primary hover:text-primary/80">
               Regístrate
             </a>
           </div>

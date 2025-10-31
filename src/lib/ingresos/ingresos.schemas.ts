@@ -16,8 +16,10 @@ export type EstadoGafete = z.infer<typeof EstadoGafeteEnum>;
  */
 const ContratistaSchema = z.object({
   id: z.number(),
-  nombre: z.string(),
-  identificacion: z.string(),
+  nombreCompleto: z.string(),
+  cedula: z.string(),
+  primerNombre: z.string(),
+  primerApellido: z.string(),
 });
 
 /**
@@ -111,11 +113,11 @@ export const ResponseIngresoSchema = z.object({
   
   ingresadoPor: UsuarioSchema,
   
-  sacadoPor: UsuarioSchema.nullable(),
+  sacadoPor: UsuarioSchema.nullable().optional(), // ✅ Puede ser null O undefined
   
   dentroFuera: z.boolean(),
   
-  observaciones: z.string().nullable(),
+  observaciones: z.string().nullable().optional(), // ✅ Puede ser null O undefined
   
   duracion: z.string().optional(),
   
@@ -123,7 +125,7 @@ export const ResponseIngresoSchema = z.object({
   
   fechaActualizacion: z.string().datetime(),
   
-  fechaEliminacion: z.string().datetime().nullable(),
+  fechaEliminacion: z.string().datetime().nullable().optional(),
 });
 
 export type ResponseIngreso = z.infer<typeof ResponseIngresoSchema>;

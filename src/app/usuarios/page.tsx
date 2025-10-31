@@ -1,159 +1,221 @@
+// app/register/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { getUsuarios, deleteUsuario, restoreUsuario } from "../api/usuarios";
-import { usuarioSchema } from "@/src/app/schemas/usuarioSchemas";
-import { z } from "zod";
-import { Table } from "../../components/Table";
-import { Edit, Trash2, RefreshCw, Plus } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<z.infer<typeof usuarioSchema>[]>([]);
-  const [loading, setLoading] = useState(true);
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/src/hooks/useToast";
+import { Loader2 } from "lucide-react";
+import { register } from "@/src/app/api/usuarios";
+import { createUsuarioSchema } from "@/src/app/schemas/usuarioSchemas";
 
-  const fetchUsuarios = async () => {
-    setLoading(true);
-    try {
-      const data = await getUsuarios();
-      console.log("📊 Usuarios recibidos:", data);
-      console.log("🔴 Usuarios INACTIVOS:", data.filter((u) => !u.activo));
-      // Validar datos con el esquema
-      const validatedData = data.map((item) => usuarioSchema.parse(item));
-      setUsuarios(validatedData);
-    } catch (err) {
-      console.error(err);
-      alert("Error cargando usuarios");
-    } finally {
-      setLoading(false);
-    }
-  };
+type FormData = z.infer<typeof createUsuarioSchema>;
 
-  useEffect(() => {
-    fetchUsuarios();
-  }, []);
+export default function RegisterPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { success, error } = useToast();
+  const router = useRouter();
 
-  const handleEdit = (usuario: z.infer<typeof usuarioSchema>) => {
-    window.location.href = `/usuarios/editar/${usuario.id}`;
-  };
+  const form = useForm<FormData>({
+    resolver: zodResolver(createUsuarioSchema),
+    defaultValues: {
+      primerNombre: "",
+      segundoNombre: "",
+      primerApellido: "",
+      segundoApellido: "",
+      cedula: "",
+      email: "",
+      telefono: "",
+      password: "",
+      rol: "OPERADOR",
+    },
+  });
 
-  const handleDelete = async (usuario: z.infer<typeof usuarioSchema>) => {
-    if (!confirm(`¿Seguro que quieres eliminar a ${usuario.primerNombre}?`)) return;
+ const onSubmit = async (data: FormData) => {
+  setIsLoading(true);
 
-    try {
-      await deleteUsuario(usuario.id);
-      await fetchUsuarios();
-      alert(`Usuario ${usuario.primerNombre} eliminado correctamente`);
-    } catch (error) {
-      console.error(error);
-      alert("Error al eliminar el usuario");
-    }
-  };
+  try {
+    await register(data);
+    success("¡Cuenta creada con éxito! Redirigiendo...", 4000);
+    setTimeout(() => router.push("/login"), 1500);
+  } catch (err: any) {
+    // EXTRAER SOLO EL STRING
+    const message =
+      err?.response?.data?.message ||
+      err?.message ||
+      "No se pudo crear la cuenta";
 
-  const handleRestore = async (usuario: z.infer<typeof usuarioSchema>) => {
-    if (!confirm(`Restaurar a ${usuario.primerNombre}?`)) return;
-
-    try {
-      await restoreUsuario(usuario.id);
-      await fetchUsuarios();
-      alert(`Usuario ${usuario.primerNombre} restaurado correctamente`);
-    } catch (error) {
-      console.error(error);
-      alert("Error al restaurar el usuario");
-    }
-  };
+    error(message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Gestión de Usuarios</h1>
-            <p className="text-gray-600">Administra los usuarios del sistema</p>
-          </div>
-          <div className="flex gap-4">
-            <Link
-              href="/usuarios/crear"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Crear usuario
-            </Link>
-            <button
-              onClick={fetchUsuarios}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium transition-colors"
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-              Refrescar
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 p-4">
+      <Card className="w-full max-w-2xl shadow-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-emerald-800">
+            Registro de Usuario
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Nombres */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="primerNombre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primer Nombre *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Juan" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="segundoNombre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Segundo Nombre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Carlos" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-        {/* Tabla */}
-        <Table
-          data={usuarios}
-          columns={[
-            { header: "ID", accessor: "id", sortable: true, width: 100 },
-            {
-              header: "Nombre Completo",
-              accessor: (u) =>
-                `${u.primerNombre} ${u.segundoNombre || ""} ${u.primerApellido} ${u.segundoApellido || ""}`
-                  .replace(/\s+/g, " ")
-                  .trim(),
-              sortable: true,
-              sortKey: "primerNombre",
-              width: 250,
-            },
-            { header: "Cédula", accessor: "cedula", sortable: true, width: 150 },
-            { header: "Email", accessor: "email", sortable: true, width: 250 },
-            { header: "Rol", accessor: "rol", sortable: true, width: 150 },
-            {
-              header: "Estado",
-              accessor: (u) => (
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    u.activo ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {u.activo ? "Activo" : "Inactivo"}
-                </span>
-              ),
-              sortable: true,
-              sortKey: "activo",
-              width: 120,
-            },
-          ]}
-          actions={[
-            {
-              label: "Editar",
-              icon: <Edit className="w-4 h-4" />,
-              color: "blue",
-              onClick: handleEdit,
-            },
-            {
-              label: "Eliminar",
-              icon: <Trash2 className="w-4 h-4" />,
-              color: "red",
-              onClick: handleDelete,
-              hidden: (u) => !u.activo,
-            },
-            {
-              label: "Restaurar",
-              icon: <RefreshCw className="w-4 h-4" />,
-              color: "green",
-              onClick: handleRestore,
-              hidden: (u) => u.activo,
-            },
-          ]}
-          searchPlaceholder="Buscar por nombre, email o cédula..."
-          pageSize={50}
-          loading={loading}
-          emptyMessage="No hay usuarios registrados"
-          emptyDescription="Agrega usuarios para comenzar a gestionar el sistema"
-        />
-      </div>
+              {/* Apellidos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="primerApellido"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primer Apellido *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Pérez" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="segundoApellido"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Segundo Apellido</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Gómez" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Cédula y Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cedula"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cédula *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1-2345-6789" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="juan@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Teléfono y Contraseña */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="telefono"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono</FormLabel>
+                      <FormControl>
+                        <Input placeholder="8888-8888" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contraseña *</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Creando cuenta...
+                  </>
+                ) : (
+                  "Registrarse"
+                )}
+              </Button>
+            </form>
+          </Form>
+
+          <div className="mt-6 text-center text-sm">
+            ¿Ya tienes cuenta?{" "}
+            <a href="/login" className="font-semibold text-emerald-600 hover:underline">
+              Inicia sesión
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
